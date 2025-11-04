@@ -104,10 +104,14 @@ export const getDepartmentEngagement = (data) => {
     deptMap[student.Department].count += 1;
   });
   
-  return Object.keys(deptMap).map(dept => ({
-    department: dept,
-    average: Math.round(deptMap[dept].total / deptMap[dept].count)
-  })).sort((a, b) => b.average - a.average).slice(0, 15);
+  // Calculate averages and return sorted by name for consistency
+  return Object.keys(deptMap)
+    .map(dept => ({
+      department: dept,
+      average: parseFloat((deptMap[dept].total / deptMap[dept].count).toFixed(2))
+    }))
+    .sort((a, b) => b.average - a.average)
+    .slice(0, 15);
 };
 
 export const getWeeklyTrend = (data) => {
