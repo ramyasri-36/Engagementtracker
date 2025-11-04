@@ -115,24 +115,24 @@ export const getDepartmentEngagement = (data) => {
 };
 
 export const getWeeklyTrend = (data) => {
-  // Calculate average scores for the last 8 weeks from data
-  const weeklyScores = {};
+  // Create realistic weekly progression with natural variation
+  const baseScore = data.reduce((sum, s) => sum + (s.Total_Activity_Score || 0), 0) / data.length;
   
-  data.forEach(student => {
-    const score = student.Total_Activity_Score || 0;
-    for (let i = 1; i <= 8; i++) {
-      if (!weeklyScores[i]) weeklyScores[i] = { total: 0, count: 0 };
-      // Simulate some variation
-      const variance = Math.random() * 10 - 5;
-      weeklyScores[i].total += score + variance;
-      weeklyScores[i].count += 1;
-    }
-  });
+  // Simulate an 8-week trend with realistic variations
+  const weeklyData = [];
+  for (let week = 1; week <= 8; week++) {
+    // Create a trend: slight improvement over time with natural fluctuation
+    const trendFactor = 1 + (week - 1) * 0.03; // 3% improvement per week on average
+    const randomVariation = (Math.random() - 0.5) * 2; // ±1 point variation
+    const weekScore = baseScore * trendFactor + randomVariation;
+    
+    weeklyData.push({
+      week: `Week ${week}`,
+      score: parseFloat(weekScore.toFixed(2))
+    });
+  }
   
-  return Object.keys(weeklyScores).map(week => ({
-    week: `Week ${week}`,
-    score: Math.round(weeklyScores[week].total / weeklyScores[week].count)
-  }));
+  return weeklyData;
 };
 
 export const searchStudent = (data, searchTerm) => {
