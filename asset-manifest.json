@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/engagement-tracker/static/css/main.90d856e8.css",
-    "main.js": "/engagement-tracker/static/js/main.2d48f7cd.js",
-    "index.html": "/engagement-tracker/index.html",
-    "main.90d856e8.css.map": "/engagement-tracker/static/css/main.90d856e8.css.map",
-    "main.2d48f7cd.js.map": "/engagement-tracker/static/js/main.2d48f7cd.js.map"
+    "main.css": "/Engagementtracker/static/css/main.90d856e8.css",
+    "main.js": "/Engagementtracker/static/js/main.a8478e95.js",
+    "index.html": "/Engagementtracker/index.html",
+    "main.90d856e8.css.map": "/Engagementtracker/static/css/main.90d856e8.css.map",
+    "main.a8478e95.js.map": "/Engagementtracker/static/js/main.a8478e95.js.map"
   },
   "entrypoints": [
     "static/css/main.90d856e8.css",
-    "static/js/main.2d48f7cd.js"
+    "static/js/main.a8478e95.js"
   ]
 }
