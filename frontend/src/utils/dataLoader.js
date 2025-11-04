@@ -32,10 +32,11 @@ export const loadStudentData = async () => {
       const engagement = engagementMap[student.student_id] || {};
       
       // Calculate engagement level based on total activity score
+      // Score range in data: 7-27, so adjust thresholds accordingly
       const activityScore = engagement.total_activity_score || 0;
       let engagementLevel = 'Low';
-      if (activityScore >= 60) engagementLevel = 'High';
-      else if (activityScore >= 40) engagementLevel = 'Moderate';
+      if (activityScore >= 19) engagementLevel = 'High';        // Top 25%
+      else if (activityScore >= 14) engagementLevel = 'Moderate'; // Middle 50%
       
       // Map alert level
       let alertLevel = 'Red';
