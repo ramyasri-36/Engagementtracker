@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/engagement-tracker/static/css/main.90d856e8.css",
+    "main.js": "/engagement-tracker/static/js/main.2d48f7cd.js",
+    "index.html": "/engagement-tracker/index.html",
+    "main.90d856e8.css.map": "/engagement-tracker/static/css/main.90d856e8.css.map",
+    "main.2d48f7cd.js.map": "/engagement-tracker/static/js/main.2d48f7cd.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.90d856e8.css",
+    "static/js/main.2d48f7cd.js"
+  ]
+}
