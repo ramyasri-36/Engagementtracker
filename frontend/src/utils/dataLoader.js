@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 
 let cachedData = null;
+let cachedWeeklyLogs = null;
 
 export const loadStudentData = async () => {
   if (cachedData) return cachedData;
@@ -18,38 +19,74 @@ export const loadStudentData = async () => {
     const engagementSheet = workbook.Sheets['EngagementLogs'];
     const engagementLogs = XLSX.utils.sheet_to_json(engagementSheet);
     
-    // Create a map of student ID to their latest engagement data
-    const engagementMap = {};
+    // Cache the weekly logs for later use
+    cachedWeeklyLogs = engagementLogs;
+    
+    // Create a map of student ID to their aggregated weekly data
+    const studentWeeklyData = {};
     engagementLogs.forEach(log => {
       const studentId = log.student_id;
-      if (!engagementMap[studentId] || log.week_number > engagementMap[studentId].week_number) {
-        engagementMap[studentId] = log;
+      if (!studentWeeklyData[studentId]) {
+        studentWeeklyData[studentId] = {
+          weeks: [],
+          totalLMS: 0,
+          totalEvents: 0,
+          totalCounseling: 0,
+          totalActivityScore: 0,
+          weekCount: 0,
+          latestWeek: null
+        };
+      }
+      
+      const data = studentWeeklyData[studentId];
+      data.weeks.push(log);
+      data.totalLMS += log.lms_logins || 0;
+      data.totalEvents += log.events_attended || 0;
+      data.totalCounseling += log.counseling_visits || 0;
+      data.totalActivityScore += log.total_activity_score || 0;
+      data.weekCount++;
+      
+      // Keep latest week data
+      if (!data.latestWeek || log.week_number > data.latestWeek.week_number) {
+        data.latestWeek = log;
       }
     });
     
-    // Combine student data with their latest engagement metrics
+    // Combine student data with their aggregated metrics
     const combinedData = students.map(student => {
-      const engagement = engagementMap[student.student_id] || {};
+      const weeklyData = studentWeeklyData[student.student_id] || {
+        weeks: [],
+        totalLMS: 0,
+        totalEvents: 0,
+        totalCounseling: 0,
+        totalActivityScore: 0,
+        weekCount: 1,
+        latestWeek: {}
+      };
       
-      // Calculate engagement level based on total activity score
-      // Score range in data: 7-27, so adjust thresholds accordingly
-      const activityScore = engagement.total_activity_score || 0;
+      const latestWeek = weeklyData.latestWeek || {};
+      const avgActivityScore = weeklyData.totalActivityScore / weeklyData.weekCount;
+      
+      // Calculate engagement level based on average activity score
       let engagementLevel = 'Low';
-      if (activityScore >= 19) engagementLevel = 'High';        // Top 25%
-      else if (activityScore >= 14) engagementLevel = 'Moderate'; // Middle 50%
+      if (avgActivityScore >= 19) engagementLevel = 'High';
+      else if (avgActivityScore >= 14) engagementLevel = 'Moderate';
       
-      // Map alert level
+      // Map alert level from latest week
       let alertLevel = 'Red';
-      if (engagement.alert_level === 'green') alertLevel = 'Green';
-      else if (engagement.alert_level === 'yellow') alertLevel = 'Yellow';
+      const alertStr = String(latestWeek.alert_level || 'red').toLowerCase();
+      if (alertStr === 'green') alertLevel = 'Green';
+      else if (alertStr === 'yellow') alertLevel = 'Yellow';
       
       // Map trend
       let trend = 'Stable';
-      if (engagement.improvement_trend === 'improving') trend = 'Increasing';
-      else if (engagement.improvement_trend === 'declining') trend = 'Decreasing';
+      const trendStr = String(latestWeek.improvement_trend || '').toLowerCase();
+      if (trendStr.includes('up') || trendStr.includes('improv')) trend = 'Increasing';
+      else if (trendStr.includes('down') || trendStr.includes('declin')) trend = 'Decreasing';
       
       return {
         Student_ID: `S${student.student_id}`,
+        student_id: student.student_id,
         Name: student.student_name,
         Department: student.department,
         Gender: student.gender,
@@ -57,20 +94,32 @@ export const loadStudentData = async () => {
         GPA: student.gpa,
         Academic_Year: student.academic_year,
         Scholarship_Status: student.scholarship_status,
-        LMS_Logins_Week: engagement.lms_logins || 0,
-        Events_Attended: engagement.events_attended || 0,
-        Counseling_Sessions: engagement.counseling_visits || 0,
-        Assignments_Submitted: engagement.assignments_submitted || 0,
-        Attendance_Rate: engagement.attendance_rate || 0,
-        Peer_Interactions: engagement.peer_interactions || 0,
-        Physical_Activity: engagement.physical_activity_score || 0,
-        Social_Interaction: engagement.social_interaction_score || 0,
-        Wellness_Index: engagement.wellness_index || 0,
-        Total_Activity_Score: activityScore,
+        
+        // Latest week data
+        LMS_Logins_Week: latestWeek.lms_logins || 0,
+        Events_Attended: latestWeek.events_attended || 0,
+        Counseling_Sessions: latestWeek.counseling_visits || 0,
+        
+        // Aggregated totals
+        Total_LMS_Logins: weeklyData.totalLMS,
+        Total_Events: weeklyData.totalEvents,
+        Total_Counseling: weeklyData.totalCounseling,
+        
+        // Weekly data for charts
+        WeeklyData: weeklyData.weeks,
+        
+        // Other metrics
+        Assignments_Submitted: latestWeek.assignments_submitted || 0,
+        Attendance_Rate: latestWeek.attendance_rate || 0,
+        Peer_Interactions: latestWeek.peer_interactions || 0,
+        Physical_Activity: latestWeek.physical_activity_score || 0,
+        Social_Interaction: latestWeek.social_interaction_score || 0,
+        Wellness_Index: latestWeek.wellness_index || 0,
+        Total_Activity_Score: parseFloat(avgActivityScore.toFixed(2)),
         Engagement_Level: engagementLevel,
         Alert_Level: alertLevel,
         Trend: trend,
-        Advisor_Comments: engagement.advisor_comments || ''
+        Advisor_Comments: latestWeek.advisor_comments || ''
       };
     });
     
@@ -80,6 +129,13 @@ export const loadStudentData = async () => {
     console.error('Error loading student data:', error);
     return [];
   }
+};
+
+export const getStudentWeeklyData = (studentId) => {
+  if (!cachedWeeklyLogs) return [];
+  return cachedWeeklyLogs
+    .filter(log => log.student_id === studentId)
+    .sort((a, b) => a.week_number - b.week_number);
 };
 
 export const getEngagementStats = (data) => {
