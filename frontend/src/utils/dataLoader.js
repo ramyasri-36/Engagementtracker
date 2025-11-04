@@ -68,9 +68,12 @@ export const loadStudentData = async () => {
       const avgActivityScore = weeklyData.totalActivityScore / weeklyData.weekCount;
       
       // Calculate engagement level based on average activity score
+      // Use percentile-based thresholds for proper distribution
+      // Based on actual data: scores range from 13.35 to 18.85
       let engagementLevel = 'Low';
-      if (avgActivityScore >= 19) engagementLevel = 'High';
-      else if (avgActivityScore >= 14) engagementLevel = 'Moderate';
+      if (avgActivityScore >= 16.6) engagementLevel = 'High';        // Top 33%
+      else if (avgActivityScore >= 15.8) engagementLevel = 'Moderate'; // Middle 34%
+      // else Low (bottom 33%)
       
       // Map alert level from latest week
       let alertLevel = 'Red';
