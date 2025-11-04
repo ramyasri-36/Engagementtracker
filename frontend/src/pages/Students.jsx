@@ -144,75 +144,109 @@ export const Students = () => {
                     </div>
                   </div>
                   <Progress value={(selectedStudent.Total_Activity_Score / 27) * 100} className="h-3" />
-                  <p className="text-sm text-muted-foreground">Out of 27 maximum points</p>
+                  <p className="text-sm text-muted-foreground">Average across all weeks</p>
                 </div>
               </Card>
               
               {/* Events vs Counseling */}
               <Card className="p-6 shadow-card">
-                <h3 className="text-xl font-bold text-foreground mb-4">Events vs Counseling</h3>
+                <h3 className="text-xl font-bold text-foreground mb-4">Total Events vs Counseling</h3>
                 <div className="h-64">
-                  <Doughnut
-                    data={{
-                      labels: ['Events Attended', 'Counseling Sessions'],
-                      datasets: [{
-                        data: [selectedStudent.Events_Attended, selectedStudent.Counseling_Sessions],
-                        backgroundColor: ['hsl(211 81% 48%)', 'hsl(142 71% 45%)'],
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                      }]
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                          labels: {
-                            padding: 15,
-                            usePointStyle: true,
-                            font: { size: 12, family: 'Inter' }
+                  {selectedStudent.Total_Events > 0 || selectedStudent.Total_Counseling > 0 ? (
+                    <Doughnut
+                      data={{
+                        labels: ['Events Attended', 'Counseling Sessions'],
+                        datasets: [{
+                          data: [selectedStudent.Total_Events || 0, selectedStudent.Total_Counseling || 0],
+                          backgroundColor: ['hsl(211 81% 48%)', 'hsl(142 71% 45%)'],
+                          borderWidth: 2,
+                          borderColor: '#fff'
+                        }]
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              padding: 15,
+                              usePointStyle: true,
+                              font: { size: 12, family: 'Inter' }
+                            }
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                              }
+                            }
                           }
                         }
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      No events or counseling data available
+                    </div>
+                  )}
                 </div>
               </Card>
             </div>
             
             {/* LMS Activity */}
             <Card className="p-6 shadow-card">
-              <h3 className="text-xl font-bold text-foreground mb-4">LMS Logins Per Week</h3>
+              <h3 className="text-xl font-bold text-foreground mb-4">LMS Logins Per Week (Last 8 Weeks)</h3>
               <div className="h-64">
-                <Bar
-                  data={{
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                    datasets: [{
-                      label: 'LMS Logins',
-                      data: [
-                        Math.round(selectedStudent.LMS_Logins_Week * 0.8),
-                        Math.round(selectedStudent.LMS_Logins_Week * 0.9),
-                        selectedStudent.LMS_Logins_Week,
-                        Math.round(selectedStudent.LMS_Logins_Week * 1.1)
-                      ],
-                      backgroundColor: 'hsl(271 81% 56% / 0.8)',
-                      borderColor: 'hsl(271 81% 56%)',
-                      borderWidth: 2,
-                      borderRadius: 8
-                    }]
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false }
-                    },
-                    scales: {
-                      y: { beginAtZero: true }
-                    }
-                  }}
-                />
+                {selectedStudent.WeeklyData && selectedStudent.WeeklyData.length > 0 ? (
+                  <Bar
+                    data={{
+                      labels: selectedStudent.WeeklyData
+                        .slice(-8)
+                        .map(w => `Week ${w.week_number}`),
+                      datasets: [{
+                        label: 'LMS Logins',
+                        data: selectedStudent.WeeklyData
+                          .slice(-8)
+                          .map(w => w.lms_logins || 0),
+                        backgroundColor: 'hsl(271 81% 56% / 0.8)',
+                        borderColor: 'hsl(271 81% 56%)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                      }]
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              return `LMS Logins: ${context.parsed.y}`;
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        y: { 
+                          beginAtZero: true,
+                          ticks: {
+                            stepSize: 1
+                          }
+                        }
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    No weekly data available
+                  </div>
+                )}
               </div>
             </Card>
             
